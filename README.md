@@ -1,59 +1,105 @@
-# AngularFront
+# FinMate — Angular 20 Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.5.
+Modern personal finance management frontend for the FinMate application. Built with Angular 20, TailwindCSS, and Chart.js.
 
-## Development server
+## Tech Stack
 
-To start a local development server, run:
+- **Framework**: Angular 20 (standalone components)
+- **Styling**: TailwindCSS 4
+- **Charts**: Chart.js + ng2-charts
+- **Language**: TypeScript 5.8
+- **Build**: Angular CLI / esbuild
+
+## Project Structure
+
+```
+angular-front/src/app/
+├── components/
+│   ├── auth/
+│   │   ├── login.ts          # Login page (email/password + Google OAuth)
+│   │   └── register.ts       # Registration page
+│   ├── layout/
+│   │   ├── top-navbar.ts     # Top navigation bar
+│   │   ├── bottom-nav.ts     # Bottom navigation (5 tabs)
+│   │   └── main-layout.ts    # Page layout wrapper
+│   ├── dashboard/
+│   │   └── dashboard.ts      # Main dashboard with balance, assets, quick actions
+│   ├── stocks/
+│   │   └── stocks.ts         # Stock portfolio, holdings, trending
+│   ├── crypto/
+│   │   └── crypto.ts         # Crypto portfolio, holdings, trending
+│   ├── pfm/
+│   │   └── pfm.ts            # Personal finance (overview, transactions, goals)
+│   └── ai/
+│       └── ai.ts             # AI assistant chat interface
+├── guards/
+│   └── auth.guard.ts         # Route protection
+├── interceptors/
+│   └── auth.interceptor.ts   # JWT token injection
+├── models/
+│   └── api.models.ts         # TypeScript interfaces for API responses
+├── services/
+│   ├── auth.service.ts       # Authentication, token management
+│   └── api.service.ts        # All API calls to the backend
+├── app.routes.ts              # Routing with lazy loading
+├── app.config.ts              # App providers (HTTP, router, interceptors)
+├── app.ts                     # Root component
+└── app.html                   # Root template
+```
+
+## Pages
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/auth/login` | LoginComponent | Sign in with email/password or Google |
+| `/auth/register` | RegisterComponent | Create new account |
+| `/dashboard` | DashboardComponent | Total balance, assets overview, quick actions |
+| `/stocks` | StocksComponent | Stock portfolio, holdings list, trending stocks |
+| `/crypto` | CryptoComponent | Crypto portfolio, holdings list, trending crypto |
+| `/pfm` | PfmComponent | Financial overview, transactions, goals (tabbed) |
+| `/ai` | AiComponent | AI financial assistant chat |
+
+## Design
+
+- **Theme**: Dark mode with gradient backgrounds (`gray-900` → `black` → `gray-800`)
+- **Accent color**: `#00FF88` (green)
+- **UI style**: Glassmorphic cards, backdrop blur, rounded corners
+- **Navigation**: Bottom tab bar (mobile-first), top navbar with search/notifications/avatar
+- **Typography**: System sans-serif font stack
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+)
+- [Angular CLI](https://angular.dev/) (`npm install -g @angular/cli`)
+
+## Getting Started
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The app runs at `http://localhost:4200`.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Build
 
 ```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
+# Production build
 ng build
+
+# Output is in dist/angular-front/
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Backend Connection
 
-## Running unit tests
+The frontend connects to the ASP.NET API at `http://localhost:5100`. Make sure the backend is running before using the app.
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Default User
 
-```bash
-ng test
-```
+After starting both backend and frontend:
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Email**: `john.doe@example.com`
+- **Password**: `Test123!`
