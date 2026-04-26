@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MainLayoutComponent } from '../layout/main-layout';
+import { CashflowChartComponent } from '../charts/cashflow-chart';
 import { ApiService } from '../../services/api.service';
 import { PfmOverview, Transaction, Goal } from '../../models/api.models';
 
 @Component({
   selector: 'app-pfm',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MainLayoutComponent, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, MainLayoutComponent, CashflowChartComponent, CurrencyPipe, DatePipe],
   template: `
     <app-main-layout pageTitle="Personal Finance" activePage="pfm">
       <div class="flex flex-col h-full">
@@ -26,8 +28,8 @@ import { PfmOverview, Transaction, Goal } from '../../models/api.models';
 
         <div class="flex-1 overflow-y-auto p-4 space-y-6">
           @if (activeTab === 'Overview' && overview) {
-            <!-- Income/Expense Cards -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Income/Expense/Net cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
               <div class="bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
                 <div class="flex items-center gap-2 mb-2 text-gray-400 text-xs">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
@@ -42,26 +44,20 @@ import { PfmOverview, Transaction, Goal } from '../../models/api.models';
                 </div>
                 <div class="text-xl font-bold text-white">{{ overview.expensesMtd | currency:'USD':'symbol':'1.2-2' }}</div>
               </div>
-            </div>
-
-            <!-- Cashflow Chart -->
-            <div class="bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
-              <h3 class="font-semibold flex items-center gap-2 mb-4 text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-                Cashflow
-              </h3>
-              <div class="h-48 flex items-end gap-2">
-                @for (item of overview.cashflowData; track item.month) {
-                  <div class="flex-1 flex flex-col items-center gap-1">
-                    <div class="w-full flex gap-1 items-end" style="height: 160px">
-                      <div class="flex-1 bg-[#00FF88] rounded-t" [style.height.%]="getBarPct(item.income, maxCashflow)"></div>
-                      <div class="flex-1 bg-red-500 rounded-t" [style.height.%]="getBarPct(item.expenses, maxCashflow)"></div>
-                    </div>
-                    <span class="text-xs text-gray-500">{{ item.month }}</span>
-                  </div>
-                }
+              <div class="bg-gray-900/50 p-4 rounded-2xl border border-gray-800 col-span-2 lg:col-span-1">
+                <div class="flex items-center gap-2 mb-2 text-gray-400 text-xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    [style.color]="netMtd() >= 0 ? '#00FF88' : '#ef4444'"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m17 17-5-5-3 3-4-4"/></svg>
+                  NET (MTD)
+                </div>
+                <div class="text-xl font-bold" [style.color]="netMtd() >= 0 ? '#00FF88' : '#ef4444'">
+                  {{ netMtd() | currency:'USD':'symbol':'1.2-2' }}
+                </div>
               </div>
             </div>
+
+            <!-- Income vs Expenses line chart with filters -->
+            <app-cashflow-chart [transactions]="transactions" initialPeriod="month" [showFilters]="true" />
 
             <!-- Expense Segments -->
             <div class="bg-gray-900/50 p-4 rounded-2xl border border-gray-800">
@@ -69,7 +65,7 @@ import { PfmOverview, Transaction, Goal } from '../../models/api.models';
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/></svg>
                 Expense Segments
               </h3>
-              <div class="flex items-center gap-4">
+              <div class="flex flex-col sm:flex-row items-center gap-4">
                 <div class="h-40 w-40 flex-shrink-0 relative">
                   <div class="w-full h-full rounded-full" style="background: conic-gradient(#00FF88 0% 48%, #00CC6A 48% 66%, #009950 66% 78%, #006635 78% 86%, #004422 86% 100%)"></div>
                   <div class="absolute inset-0 flex items-center justify-center flex-col">
@@ -79,7 +75,7 @@ import { PfmOverview, Transaction, Goal } from '../../models/api.models';
                     </div>
                   </div>
                 </div>
-                <div class="flex-1 space-y-2">
+                <div class="flex-1 w-full space-y-2">
                   @for (seg of overview.expenseSegments; track seg.category) {
                     <div class="flex items-center justify-between text-sm">
                       <div class="flex items-center gap-2">
@@ -284,7 +280,7 @@ export class PfmComponent implements OnInit {
     { name: 'Retirement', emoji: '🌴' }
   ];
 
-  constructor(private api: ApiService, private fb: FormBuilder) {
+  constructor(private api: ApiService, private fb: FormBuilder, private route: ActivatedRoute) {
     this.goalForm = this.fb.group({
       name: ['', Validators.required],
       targetAmount: [null as number | null, [Validators.required, Validators.min(1)]],
@@ -294,6 +290,13 @@ export class PfmComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.route.queryParamMap.subscribe(params => {
+      const tab = params.get('tab');
+      if (tab) {
+        const match = this.tabs.find(t => t.toLowerCase() === tab.toLowerCase());
+        if (match) this.activeTab = match;
+      }
+    });
     this.api.getPfmOverview().subscribe(data => {
       this.overview = data;
       this.maxCashflow = Math.max(...data.cashflowData.flatMap(d => [d.income, d.expenses]));
@@ -358,5 +361,9 @@ export class PfmComponent implements OnInit {
   getBarPct(value: number, max: number): number {
     if (max === 0) return 0;
     return (value / max) * 100;
+  }
+
+  netMtd(): number {
+    return (this.overview?.incomeMtd ?? 0) - (this.overview?.expensesMtd ?? 0);
   }
 }

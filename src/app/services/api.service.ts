@@ -62,6 +62,10 @@ export class ApiService {
     return this.http.post<Goal>(`${this.baseUrl}/pfm/goals`, data);
   }
 
+  contributeToGoal(id: string, amount: number) {
+    return this.http.post<Goal>(`${this.baseUrl}/pfm/goals/${id}/contribute`, { amount });
+  }
+
   getChatHistory() {
     return this.http.get<ChatMessage[]>(`${this.baseUrl}/ai/history`);
   }
