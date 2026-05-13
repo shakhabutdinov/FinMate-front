@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MainLayoutComponent } from '../layout/main-layout';
 import { ApiService } from '../../services/api.service';
 import { ChatMessage } from '../../models/api.models';
@@ -39,8 +40,15 @@ import { ChatMessage } from '../../models/api.models';
           }
           @for (msg of messages; track msg.id) {
             <div [class]="msg.isFromAI ? 'flex justify-start' : 'flex justify-end'">
-              <div class="max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed" [class]="msg.isFromAI ? 'bg-gray-800 text-white rounded-tl-none' : 'bg-[#00FF88] text-black rounded-tr-none'">
-                {{ msg.content }}
+              <div class="max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed"
+                   [class]="msg.isFromAI
+                     ? 'bg-gray-800 text-white rounded-tl-none prose-ai'
+                     : 'bg-[#00FF88] text-black rounded-tr-none'">
+                @if (msg.isFromAI) {
+                  <div [innerHTML]="formatMessage(msg.content)" class="ai-message"></div>
+                } @else {
+                  {{ msg.content }}
+                }
               </div>
             </div>
           }
@@ -67,15 +75,50 @@ import { ChatMessage } from '../../models/api.models';
             }
           </div>
           <div class="flex gap-2">
-            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Ask anything about your finances..." class="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00FF88]">
-            <button (click)="sendMessage()" [disabled]="!newMessage.trim() || sending" class="p-3 bg-[#00FF88] text-black rounded-xl hover:bg-[#00FF88]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
+              placeholder="Ask anything about your finances..."
+              class="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00FF88]">
+            <button (click)="sendMessage()" [disabled]="!newMessage.trim() || sending"
+              class="p-3 bg-[#00FF88] text-black rounded-xl hover:bg-[#00FF88]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
             </button>
           </div>
         </div>
       </div>
     </app-main-layout>
-  `
+  `,
+  styles: [`
+    .ai-message :deep(strong) {
+      color: #00FF88;
+      font-weight: 600;
+    }
+    .ai-message :deep(ol) {
+      list-style: decimal;
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .ai-message :deep(ul) {
+      list-style: disc;
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .ai-message :deep(li) {
+      line-height: 1.5;
+    }
+    .ai-message :deep(p) {
+      margin-bottom: 0.4rem;
+    }
+    .ai-message :deep(br) {
+      display: block;
+      margin: 0.15rem 0;
+    }
+  `]
 })
 export class AiComponent implements OnInit {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
@@ -84,18 +127,53 @@ export class AiComponent implements OnInit {
   newMessage = '';
   sending = false;
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private sanitizer: DomSanitizer) {}
 
   ngOnInit() {
     this.api.getChatHistory().subscribe(msgs => this.messages = msgs);
     this.api.getQuickQuestions().subscribe(q => this.quickQuestions = q);
   }
 
+  formatMessage(content: string): SafeHtml {
+    let html = content
+
+      // Bold: **text** → <strong>text</strong>
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+
+      // Numbered list: lines starting with "1. " "2. " etc
+      .replace(/^(\d+)\.\s+(.+)$/gm, '<li>$2</li>')
+
+      // Bullet list: lines starting with "- "
+      .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+
+      // Wrap consecutive <li> items in <ol> or <ul>
+      // Simple approach: wrap all <li> blocks in <ul>
+      .replace(/(<li>.*<\/li>(\n|$))+/gs, (match) => `<ul>${match}</ul>`)
+
+      // Line breaks: double newline → paragraph break
+      .replace(/\n\n/g, '</p><p>')
+
+      // Single newline → <br>
+      .replace(/\n/g, '<br>');
+
+    // Wrap in a paragraph if not already structured
+    if (!html.startsWith('<')) {
+      html = `<p>${html}</p>`;
+    }
+
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
   sendMessage() {
     if (!this.newMessage.trim() || this.sending) return;
     const content = this.newMessage;
     this.newMessage = '';
-    this.messages.push({ id: crypto.randomUUID(), content, isFromAI: false, createdAt: new Date().toISOString() });
+    this.messages.push({
+      id: crypto.randomUUID(),
+      content,
+      isFromAI: false,
+      createdAt: new Date().toISOString()
+    });
     this.sending = true;
     this.scrollToBottom();
 
@@ -119,7 +197,8 @@ export class AiComponent implements OnInit {
   private scrollToBottom() {
     setTimeout(() => {
       if (this.chatContainer) {
-        this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+        this.chatContainer.nativeElement.scrollTop =
+          this.chatContainer.nativeElement.scrollHeight;
       }
     }, 100);
   }

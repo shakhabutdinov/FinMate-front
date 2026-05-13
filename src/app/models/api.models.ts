@@ -201,3 +201,39 @@ export interface AlpacaBar {
   time: number;
   close: number;
 }
+
+// ── Order types ────────────────────────────────────────────────────────────
+
+export interface PlaceOrderRequest {
+  symbol: string;
+  qty: number;
+  side: 'buy' | 'sell';
+  type: 'market' | 'limit';
+  limitPrice?: number;
+  timeInForce: 'day' | 'gtc';
+}
+
+export interface OrderResult {
+  orderId: string;
+  symbol: string;
+  qty: number;
+  side: string;
+  type: string;
+  status: string;
+  filledAvgPrice: number | null;
+  limitPrice: number | null;
+  timeInForce: string;
+  submittedAt: string;
+}
+
+export interface OrderSummary {
+  orderId: string;
+  symbol: string;
+  qty: number;
+  filledQty: number;
+  side: string;
+  type: string;
+  status: string;
+  filledAvgPrice: number | null;
+  submittedAt: string;
+}

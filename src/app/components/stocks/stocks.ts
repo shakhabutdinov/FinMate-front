@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { MainLayoutComponent } from '../layout/main-layout';
 import { ApiService } from '../../services/api.service';
-import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '../../models/api.models';
+import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar, OrderSummary, OrderResult } from '../../models/api.models';
 
 @Component({
   selector: 'app-stocks',
@@ -19,7 +19,8 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
             <div class="w-8 h-8 border-2 border-[#00FF88] border-t-transparent rounded-full animate-spin"></div>
           </div>
         } @else if (!alpacaData || !alpacaData.isConnected) {
-          <!-- Not Connected -->
+
+          <!-- ── NOT CONNECTED ─────────────────────────────────────────── -->
           <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
             <div class="flex flex-col items-center justify-center pt-8 pb-4">
               <div class="w-20 h-20 rounded-2xl bg-[#00FF88]/10 flex items-center justify-center mb-4">
@@ -29,7 +30,7 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                 </svg>
               </div>
               <h2 class="text-xl font-bold text-white mb-2">Alpaca Not Connected</h2>
-              <p class="text-gray-400 text-sm text-center px-6 mb-6">Connect your Alpaca brokerage account to view your stock positions in real time.</p>
+              <p class="text-gray-400 text-sm text-center px-6 mb-6">Connect your Alpaca brokerage account to trade stocks and view your positions in real time.</p>
             </div>
 
             <div class="bg-gray-800/40 border border-gray-700 rounded-2xl p-5">
@@ -76,33 +77,11 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                 </div>
               </div>
             </div>
-
-            <!-- Manual Holdings below -->
-            @if (data) {
-              <div class="space-y-3 pt-2">
-                <h3 class="text-gray-400 text-sm font-medium px-1">Manual Holdings</h3>
-                @for (holding of data.holdings; track holding.id) {
-                  <div class="w-full flex items-center justify-between p-3 bg-gray-900/50 rounded-2xl border border-transparent">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" [style.background-color]="holding.color" [style.color]="getTextColor(holding.color)">
-                        {{ holding.symbol[0] }}
-                      </div>
-                      <div class="text-left">
-                        <div class="font-medium text-white">{{ holding.companyName }}</div>
-                        <div class="text-xs text-gray-400">{{ holding.pricePerShare | currency:'USD' }}</div>
-                      </div>
-                    </div>
-                    <div class="text-right">
-                      <div class="font-medium text-white">{{ holding.totalValue | currency:'USD':'symbol':'1.0-0' }}</div>
-                      <div class="text-xs text-gray-400">{{ holding.quantity }} sh</div>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
           </div>
+
         } @else {
-          <!-- Connected - Alpaca Dashboard -->
+
+          <!-- ── CONNECTED ─────────────────────────────────────────────── -->
           <div class="flex-1 overflow-y-auto pb-20">
             <div class="p-4 space-y-5">
 
@@ -128,17 +107,13 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                 </div>
               </div>
 
-              <!-- Logout Confirmation -->
+              <!-- Disconnect Confirm -->
               @if (showLogoutConfirm) {
                 <div class="bg-gray-900/80 border border-red-500/30 rounded-2xl p-4">
                   <p class="text-white text-sm font-medium mb-3 text-center">Disconnect Alpaca account?</p>
                   <div class="flex gap-3">
-                    <button (click)="showLogoutConfirm = false" class="flex-1 py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded-xl transition-colors font-medium">
-                      No
-                    </button>
-                    <button (click)="disconnect()" class="flex-1 py-2 px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-xl transition-colors font-medium border border-red-500/30">
-                      Yes, Disconnect
-                    </button>
+                    <button (click)="showLogoutConfirm = false" class="flex-1 py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded-xl transition-colors font-medium">No</button>
+                    <button (click)="disconnect()" class="flex-1 py-2 px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-xl transition-colors font-medium border border-red-500/30">Yes, Disconnect</button>
                   </div>
                 </div>
               }
@@ -177,7 +152,7 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                 </div>
               } @else {
                 <div class="text-center py-8">
-                  <p class="text-gray-500 text-sm">No open positions</p>
+                  <p class="text-gray-500 text-sm">No open positions. Place a buy order below to get started.</p>
                 </div>
               }
 
@@ -200,9 +175,7 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                         </canvas>
                       </div>
                     } @else if (!chartLoading) {
-                      <div class="h-[200px] flex items-center justify-center text-gray-500 text-sm">
-                        No chart data available
-                      </div>
+                      <div class="h-[200px] flex items-center justify-center text-gray-500 text-sm">No chart data available</div>
                     } @else {
                       <div class="h-[200px] flex items-center justify-center">
                         <div class="w-6 h-6 border-2 border-[#00FF88] border-t-transparent rounded-full animate-spin"></div>
@@ -212,13 +185,136 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                 </div>
               }
 
-              <!-- Trending -->
+
+              <!-- ── TRADE PANEL ──────────────────────────── -->
+              <div class="bg-gray-800/40 border border-gray-700 rounded-2xl p-5 space-y-4">
+                <h3 class="text-white font-semibold">Place Order</h3>
+
+                <form [formGroup]="tradeForm" class="space-y-4">
+                <!-- Symbol -->
+                <div>
+                  <label class="text-gray-400 text-xs mb-1 block">Symbol</label>
+                  <input type="text" formControlName="symbol" placeholder="e.g. AAPL"
+                    class="w-full h-11 bg-gray-800/50 border border-gray-700 text-white text-sm placeholder:text-gray-500 rounded-lg px-3 uppercase focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all">
+                </div>
+                <!-- Buy / Sell -->
+                <div class="flex rounded-xl overflow-hidden border border-gray-700">
+                  <button type="button" (click)="setSide('buy')"
+                    class="flex-1 py-2.5 text-sm font-medium transition-colors"
+                    [class]="tradeSide === 'buy' ? 'bg-[#00FF88] text-black' : 'bg-gray-800/50 text-gray-400 hover:text-white'">
+                    Buy
+                  </button>
+                  <button type="button" (click)="setSide('sell')"
+                    class="flex-1 py-2.5 text-sm font-medium transition-colors"
+                    [class]="tradeSide === 'sell' ? 'bg-red-500 text-white' : 'bg-gray-800/50 text-gray-400 hover:text-white'">
+                    Sell
+                  </button>
+                </div>
+                <!-- Order type -->
+                <div>
+                  <label class="text-gray-400 text-xs mb-1 block">Order Type</label>
+                  <select formControlName="type"
+                    class="w-full h-11 bg-gray-800/50 border border-gray-700 text-white text-sm rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all">
+                    <option value="market">Market</option>
+                    <option value="limit">Limit</option>
+                  </select>
+                </div>
+                <!-- Quantity -->
+                <div>
+                  <label class="text-gray-400 text-xs mb-1 block">Quantity (shares)</label>
+                  <input type="number" formControlName="qty" min="0.001" step="1" placeholder="e.g. 5"
+                    class="w-full h-11 bg-gray-800/50 border border-gray-700 text-white text-sm placeholder:text-gray-500 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all">
+                </div>
+                @if (tradeForm.get('type')?.value === 'limit') {
+                  <div>
+                    <label class="text-gray-400 text-xs mb-1 block">Limit Price (USD)</label>
+                    <input type="number" formControlName="limitPrice" min="0.01" step="0.01" placeholder="e.g. 180.00"
+                      class="w-full h-11 bg-gray-800/50 border border-gray-700 text-white text-sm placeholder:text-gray-500 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all">
+                  </div>
+                }
+                <!-- Time in force -->
+                <div>
+                  <label class="text-gray-400 text-xs mb-1 block">Time in Force</label>
+                  <select formControlName="timeInForce"
+                    class="w-full h-11 bg-gray-800/50 border border-gray-700 text-white text-sm rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-[#00FF88]/50 transition-all">
+                    <option value="day">Day (expires end of day)</option>
+                    <option value="gtc">GTC (good till cancelled)</option>
+                  </select>
+                </div>
+                </form>
+
+                <!-- Error -->
+                @if (tradeError) {
+                  <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-xs">{{ tradeError }}</div>
+                }
+
+                <!-- Success result -->
+                @if (lastOrderResult) {
+                  <div class="bg-[#00FF88]/10 border border-[#00FF88]/30 rounded-xl p-3 space-y-1">
+                    <p class="text-[#00FF88] text-xs font-semibold">Order submitted successfully</p>
+                    <p class="text-gray-300 text-xs">{{ lastOrderResult.side | titlecase }} {{ lastOrderResult.qty }} × {{ lastOrderResult.symbol }} — {{ lastOrderResult.type | titlecase }}</p>
+                    <p class="text-gray-400 text-xs">Status: <span class="text-white">{{ lastOrderResult.status }}</span></p>
+                    @if (lastOrderResult.filledAvgPrice) {
+                      <p class="text-gray-400 text-xs">Filled @ <span class="text-white">{{ lastOrderResult.filledAvgPrice | currency:'USD' }}</span></p>
+                    }
+                  </div>
+                }
+
+                <!-- Submit button -->
+                <button type="button" (click)="placeOrder()" [disabled]="placingOrder || tradeForm.invalid"
+                  class="w-full h-11 rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                  [class]="tradeSide === 'buy'
+                    ? 'bg-[#00FF88] hover:bg-[#00FF88]/90 text-black'
+                    : 'bg-red-500 hover:bg-red-500/90 text-white'">
+                  {{ placingOrder ? 'Placing Order...' : (tradeSide === 'buy' ? 'Buy ' : 'Sell ') + (tradeForm.get('symbol')?.value || '—') }}
+                </button>
+              </div>
+
+              <!-- ── ORDER HISTORY ────────────────────────────────────── -->
+              @if (orders.length > 0) {
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between px-1">
+                    <h3 class="text-gray-400 text-sm font-medium">Recent Orders</h3>
+                    <button (click)="loadOrders()" class="text-[#00FF88] text-xs hover:underline">Refresh</button>
+                  </div>
+                  @for (order of orders; track order.orderId) {
+                    <div class="flex items-center justify-between p-3 bg-gray-900/50 rounded-xl border border-gray-800">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                             [class]="order.side === 'buy' ? 'bg-[#00FF88]/15 text-[#00FF88]' : 'bg-red-500/15 text-red-400'">
+                          {{ order.side === 'buy' ? 'B' : 'S' }}
+                        </div>
+                        <div>
+                          <div class="text-white text-sm font-medium">{{ order.symbol }}</div>
+                          <div class="text-gray-400 text-xs">{{ order.filledQty }}/{{ order.qty }} sh · {{ order.type }}</div>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-xs font-medium px-2 py-0.5 rounded-full"
+                             [class]="getStatusClass(order.status)">
+                          {{ order.status }}
+                        </div>
+                        @if (order.filledAvgPrice) {
+                          <div class="text-gray-400 text-xs mt-0.5">@ {{ order.filledAvgPrice | currency:'USD' }}</div>
+                        }
+                        @if (order.status === 'new' || order.status === 'accepted' || order.status === 'pending_new') {
+                          <button (click)="cancelOrder(order.orderId)"
+                            class="text-red-400 text-xs hover:underline mt-1 block">Cancel</button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+<!--               Trending
               @if (data && data.trending.length > 0) {
                 <div class="space-y-3">
                   <h3 class="text-gray-400 text-sm font-medium px-1">Trending</h3>
                   <div class="grid grid-cols-2 gap-3">
                     @for (item of data.trending; track item.symbol) {
-                      <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-800">
+                      <button type="button" (click)="setTradeSymbol(item.symbol)"
+                        class="bg-gray-900/50 p-3 rounded-xl border border-gray-800 text-left hover:border-[#00FF88]/20 transition-colors">
                         <div class="flex justify-between items-start mb-2">
                           <div class="font-medium text-sm text-white">{{ item.symbol }}</div>
                           <div class="text-xs" [class]="item.changePercent >= 0 ? 'text-[#00FF88]' : 'text-red-500'">
@@ -227,15 +323,20 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
                         </div>
                         <div class="h-10 flex items-end gap-0.5">
                           @for (val of item.chartData; track $index) {
-                            <div class="flex-1 rounded-t" [style.height.%]="getBarHeight(val, item.chartData)" [style.background-color]="item.changePercent >= 0 ? '#00FF88' : '#ef4444'" [style.opacity]="0.4 + ($index / item.chartData.length) * 0.6"></div>
+                            <div class="flex-1 rounded-t"
+                                 [style.height.%]="getBarHeight(val, item.chartData)"
+                                 [style.background-color]="item.changePercent >= 0 ? '#00FF88' : '#ef4444'"
+                                 [style.opacity]="0.4 + ($index / item.chartData.length) * 0.6">
+                            </div>
                           }
                         </div>
                         <div class="mt-2 text-xs text-gray-400">{{ item.price | currency:'USD' }}</div>
-                      </div>
+                      </button>
                     }
                   </div>
                 </div>
-              }
+              } -->
+
             </div>
           </div>
         }
@@ -246,6 +347,7 @@ import { StockPortfolio, AlpacaAccountData, AlpacaPosition, AlpacaBar } from '..
 export class StocksComponent implements OnInit {
   data: StockPortfolio | null = null;
   alpacaData: AlpacaAccountData | null = null;
+  orders: OrderSummary[] = [];
   loading = true;
   connecting = false;
   error = '';
@@ -253,6 +355,13 @@ export class StocksComponent implements OnInit {
   selectedPosition: AlpacaPosition | null = null;
   chartLoading = false;
   connectForm;
+
+  // Trade panel state
+  tradeForm!: FormGroup;
+  tradeSide: 'buy' | 'sell' = 'buy';
+  placingOrder = false;
+  tradeError = '';
+  lastOrderResult: OrderResult | null = null;
 
   lineChartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
@@ -289,20 +398,12 @@ export class StocksComponent implements OnInit {
       }
     },
     scales: {
-      x: {
-        display: true,
-        grid: { display: false },
-        ticks: { color: '#6b7280', font: { size: 10 }, maxTicksLimit: 6 }
-      },
+      x: { display: true, grid: { display: false }, ticks: { color: '#6b7280', font: { size: 10 }, maxTicksLimit: 6 } },
       y: {
         display: true,
         position: 'right',
         grid: { color: 'rgba(75,85,99,0.2)' },
-        ticks: {
-          color: '#6b7280',
-          font: { size: 10 },
-          callback: (val) => '$' + Number(val).toLocaleString(undefined, { maximumFractionDigits: 2 })
-        }
+        ticks: { color: '#6b7280', font: { size: 10 }, callback: (val) => '$' + Number(val).toLocaleString(undefined, { maximumFractionDigits: 2 }) }
       }
     }
   };
@@ -317,22 +418,26 @@ export class StocksComponent implements OnInit {
     META:  { bg: 'rgba(24,119,242,0.125)',   text: 'rgb(24,119,242)' },
     AMD:   { bg: 'rgba(0,128,0,0.125)',      text: 'rgb(0,128,0)' },
     NFLX:  { bg: 'rgba(229,9,20,0.125)',     text: 'rgb(229,9,20)' },
-    DIS:   { bg: 'rgba(0,99,191,0.125)',     text: 'rgb(0,99,191)' },
-    SPY:   { bg: 'rgba(255,200,0,0.125)',    text: 'rgb(255,200,0)' },
-    QQQ:   { bg: 'rgba(0,168,107,0.125)',    text: 'rgb(0,168,107)' },
   };
 
   constructor(private fb: FormBuilder, private api: ApiService) {
     this.connectForm = this.fb.group({
-      apiKey: ['', [Validators.required, Validators.minLength(10)]],
+      apiKey:    ['', [Validators.required, Validators.minLength(10)]],
       secretKey: ['', [Validators.required, Validators.minLength(10)]],
-      isPaper: [true]
+      isPaper:   [true]
+    });
+
+    this.tradeForm = this.fb.group({
+      symbol:      ['', Validators.required],
+      type:        ['market'],
+      qty:         [null, [Validators.required, Validators.min(0.001)]],
+      limitPrice:  [null],
+      timeInForce: ['day']
     });
   }
 
   ngOnInit() {
     this.api.getStockPortfolio().subscribe(data => this.data = data);
-
     this.api.getAlpacaStatus().subscribe({
       next: (status) => {
         if (status.isConnected) {
@@ -354,9 +459,8 @@ export class StocksComponent implements OnInit {
       next: (data) => {
         this.alpacaData = data;
         this.connecting = false;
-        if (data.positions.length > 0) {
-          this.selectPosition(data.positions[0]);
-        }
+        this.loadOrders();
+        if (data.positions.length > 0) this.selectPosition(data.positions[0]);
       },
       error: (err) => {
         this.error = err.error?.error || 'Failed to connect. Check your API keys.';
@@ -370,12 +474,79 @@ export class StocksComponent implements OnInit {
     this.api.disconnectAlpaca().subscribe(() => {
       this.alpacaData = null;
       this.selectedPosition = null;
+      this.orders = [];
     });
   }
 
   selectPosition(pos: AlpacaPosition) {
     this.selectedPosition = pos;
+    this.tradeForm.patchValue({ symbol: pos.symbol });
     this.loadBars(pos.symbol);
+  }
+
+  setSide(side: 'buy' | 'sell') {
+    this.tradeSide = side;
+  }
+
+  setTradeSymbol(symbol: string) {
+    this.tradeForm.patchValue({ symbol });
+  }
+
+  placeOrder() {
+    if (this.tradeForm.invalid) return;
+    this.placingOrder = true;
+    this.tradeError = '';
+    this.lastOrderResult = null;
+
+    const { symbol, type, qty, limitPrice, timeInForce } = this.tradeForm.value;
+
+    this.api.placeOrder({
+      symbol: symbol.toUpperCase(),
+      qty,
+      side: this.tradeSide,
+      type,
+      limitPrice: type === 'limit' ? limitPrice : undefined,
+      timeInForce
+    }).subscribe({
+      next: (result) => {
+        this.lastOrderResult = result;
+        this.placingOrder = false;
+        this.tradeForm.patchValue({ qty: null, limitPrice: null });
+        this.loadAccountData();
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.tradeError = err.error?.error || 'Order failed. Please try again.';
+        this.placingOrder = false;
+      }
+    });
+  }
+
+  loadOrders() {
+    this.api.getOrders(20).subscribe({
+      next: (orders) => this.orders = orders,
+      error: () => {}
+    });
+  }
+
+  cancelOrder(orderId: string) {
+    this.api.cancelOrder(orderId).subscribe({
+      next: () => this.loadOrders(),
+      error: () => {}
+    });
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'filled':       return 'bg-[#00FF88]/15 text-[#00FF88]';
+      case 'canceled':
+      case 'cancelled':    return 'bg-gray-700 text-gray-400';
+      case 'new':
+      case 'accepted':
+      case 'pending_new':  return 'bg-yellow-500/15 text-yellow-400';
+      case 'partially_filled': return 'bg-blue-500/15 text-blue-400';
+      default:             return 'bg-gray-700 text-gray-400';
+    }
   }
 
   getSymbolBgColor(symbol: string): string {
@@ -384,14 +555,6 @@ export class StocksComponent implements OnInit {
 
   getSymbolTextColor(symbol: string): string {
     return this.symbolColors[symbol]?.text || 'rgb(107,114,128)';
-  }
-
-  getTextColor(bgColor: string): string {
-    const match = bgColor.match(/\d+/g);
-    if (match && match.length >= 3) {
-      return `rgb(${match[0]}, ${match[1]}, ${match[2]})`;
-    }
-    return '#00FF88';
   }
 
   getBarHeight(val: number, data: number[]): number {
@@ -406,7 +569,8 @@ export class StocksComponent implements OnInit {
       next: (data) => {
         this.alpacaData = data;
         this.loading = false;
-        if (data.positions.length > 0) {
+        this.loadOrders();
+        if (data.positions.length > 0 && !this.selectedPosition) {
           this.selectPosition(data.positions[0]);
         }
       },
@@ -418,22 +582,17 @@ export class StocksComponent implements OnInit {
     this.chartLoading = true;
     this.api.getAlpacaBars(symbol, '1Day', 30).subscribe({
       next: (bars) => {
-        const labels = bars.map(b => {
-          const d = new Date(b.time);
-          return `${d.getMonth() + 1}/${d.getDate()}`;
-        });
-        const data = bars.map(b => b.close);
-
         this.lineChartData = {
-          labels,
+          labels: bars.map(b => {
+            const d = new Date(b.time);
+            return `${d.getMonth() + 1}/${d.getDate()}`;
+          }),
           datasets: [{
-            data,
+            data: bars.map(b => b.close),
             borderColor: '#00FF88',
             backgroundColor: 'rgba(0, 255, 136, 0.08)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 4,
+            fill: true, tension: 0.4,
+            pointRadius: 0, pointHoverRadius: 4,
             pointHoverBackgroundColor: '#00FF88',
             borderWidth: 2
           }]

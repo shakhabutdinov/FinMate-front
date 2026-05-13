@@ -4,7 +4,8 @@ import {
   DashboardData, StockPortfolio, CryptoPortfolio,
   PfmOverview, Transaction, Goal, ChatMessage, PaymentConfig,
   StockHolding, CryptoHolding, BinanceStatus, BinanceAccountData, KlinePoint,
-  AlpacaStatus, AlpacaAccountData, AlpacaBar, SubscriptionStatus
+  AlpacaStatus, AlpacaAccountData, AlpacaBar, SubscriptionStatus,
+  PlaceOrderRequest, OrderResult, OrderSummary
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +32,12 @@ export class ApiService {
 
   getCryptoPortfolio() {
     return this.http.get<CryptoPortfolio>(`${this.baseUrl}/crypto`);
+  }
+
+  getCryptoLivePrice(symbol: string) {
+    return this.http.get<{ symbol: string; price: number; currency: string }>(
+      `${this.baseUrl}/crypto/price/${symbol.toUpperCase()}`
+    );
   }
 
   createCryptoHolding(data: { symbol: string; name: string; pricePerUnit: number; amount: number; color: string }) {
@@ -124,6 +131,20 @@ export class ApiService {
 
   getAlpacaBars(symbol: string, timeframe = '1Day', limit = 30) {
     return this.http.get<AlpacaBar[]>(`${this.baseUrl}/alpaca/bars/${symbol}?timeframe=${timeframe}&limit=${limit}`);
+  }
+
+  // ── Orders ─────────────────────────────────────────────────────────────
+
+  placeOrder(order: PlaceOrderRequest) {
+    return this.http.post<OrderResult>(`${this.baseUrl}/alpaca/orders`, order);
+  }
+
+  getOrders(limit = 20) {
+    return this.http.get<OrderSummary[]>(`${this.baseUrl}/alpaca/orders?limit=${limit}`);
+  }
+
+  cancelOrder(orderId: string) {
+    return this.http.delete(`${this.baseUrl}/alpaca/orders/${orderId}`);
   }
 
   getSubscriptionStatus() {
