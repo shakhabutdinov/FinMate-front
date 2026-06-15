@@ -13,39 +13,75 @@ import { ChatMessage } from '../../models/api.models';
   template: `
     <app-main-layout pageTitle="AI Assistant" activePage="ai">
       <div class="flex flex-col h-full bg-black text-white">
-        <!-- AI Header -->
-        <div class="p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md">
+        <div
+          class="p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md"
+        >
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-[#00FF88]/20 rounded-xl flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+            <div
+              class="w-10 h-10 bg-[#00FF88]/20 rounded-xl flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#00FF88"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 8V4H8" />
+                <rect width="16" height="12" x="4" y="8" rx="2" />
+                <path d="M2 14h2" />
+                <path d="M20 14h2" />
+                <path d="M15 13v2" />
+                <path d="M9 13v2" />
+              </svg>
             </div>
             <div>
               <h1 class="font-bold text-lg">Finmate AI</h1>
               <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 bg-[#00FF88] rounded-full animate-pulse"></span>
+                <span
+                  class="w-2 h-2 bg-[#00FF88] rounded-full animate-pulse"
+                ></span>
                 <span class="text-xs text-gray-400">Online</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Messages -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4" #chatContainer>
           @if (messages.length === 0) {
             <div class="flex justify-start">
-              <div class="max-w-[85%] p-4 rounded-2xl bg-gray-800 text-white rounded-tl-none">
-                <p class="text-sm leading-relaxed">Hello! I'm your personal financial assistant. How can I help you today? You can ask me about your assets, market trends, or for investment advice.</p>
+              <div
+                class="max-w-[85%] p-4 rounded-2xl bg-gray-800 text-white rounded-tl-none"
+              >
+                <p class="text-sm leading-relaxed">
+                  Hello! I'm your personal financial assistant. How can I help
+                  you today? You can ask me about your assets, market trends, or
+                  for investment advice.
+                </p>
               </div>
             </div>
           }
           @for (msg of messages; track msg.id) {
-            <div [class]="msg.isFromAI ? 'flex justify-start' : 'flex justify-end'">
-              <div class="max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed"
-                   [class]="msg.isFromAI
-                     ? 'bg-gray-800 text-white rounded-tl-none prose-ai'
-                     : 'bg-[#00FF88] text-black rounded-tr-none'">
+            <div
+              [class]="msg.isFromAI ? 'flex justify-start' : 'flex justify-end'"
+            >
+              <div
+                class="max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed"
+                [class]="
+                  msg.isFromAI
+                    ? 'bg-gray-800 text-white rounded-tl-none prose-ai'
+                    : 'bg-[#00FF88] text-black rounded-tr-none'
+                "
+              >
                 @if (msg.isFromAI) {
-                  <div [innerHTML]="formatMessage(msg.content)" class="ai-message"></div>
+                  <div
+                    [innerHTML]="formatMessage(msg.content)"
+                    class="ai-message"
+                  ></div>
                 } @else {
                   {{ msg.content }}
                 }
@@ -54,71 +90,107 @@ import { ChatMessage } from '../../models/api.models';
           }
           @if (sending) {
             <div class="flex justify-start">
-              <div class="max-w-[85%] p-4 rounded-2xl bg-gray-800 rounded-tl-none">
+              <div
+                class="max-w-[85%] p-4 rounded-2xl bg-gray-800 rounded-tl-none"
+              >
                 <div class="flex gap-1">
-                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                  <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                  <div
+                    class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  ></div>
+                  <div
+                    class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                    style="animation-delay: 0.1s"
+                  ></div>
+                  <div
+                    class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                    style="animation-delay: 0.2s"
+                  ></div>
                 </div>
               </div>
             </div>
           }
         </div>
 
-        <!-- Input Area -->
         <div class="p-4 bg-gray-900/50 border-t border-gray-800 space-y-4">
           <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             @for (q of quickQuestions; track q) {
-              <button (click)="sendQuickQuestion(q)" class="flex-shrink-0 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-xs text-gray-300 transition-colors border border-gray-700 whitespace-nowrap">
+              <button
+                (click)="sendQuickQuestion(q)"
+                class="flex-shrink-0 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-xs text-gray-300 transition-colors border border-gray-700 whitespace-nowrap"
+              >
                 {{ q }}
               </button>
             }
           </div>
           <div class="flex gap-2">
-            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
+            <input
+              type="text"
+              [(ngModel)]="newMessage"
+              (keyup.enter)="sendMessage()"
               placeholder="Ask anything about your finances..."
-              class="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00FF88]">
-            <button (click)="sendMessage()" [disabled]="!newMessage.trim() || sending"
-              class="p-3 bg-[#00FF88] text-black rounded-xl hover:bg-[#00FF88]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
+              class="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#00FF88]"
+            />
+            <button
+              (click)="sendMessage()"
+              [disabled]="!newMessage.trim() || sending"
+              class="p-3 bg-[#00FF88] text-black rounded-xl hover:bg-[#00FF88]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+                />
+                <path d="m21.854 2.147-10.94 10.939" />
+              </svg>
             </button>
           </div>
         </div>
       </div>
     </app-main-layout>
   `,
-  styles: [`
-    .ai-message :deep(strong) {
-      color: #00FF88;
-      font-weight: 600;
-    }
-    .ai-message :deep(ol) {
-      list-style: decimal;
-      padding-left: 1.25rem;
-      margin: 0.5rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    .ai-message :deep(ul) {
-      list-style: disc;
-      padding-left: 1.25rem;
-      margin: 0.5rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    .ai-message :deep(li) {
-      line-height: 1.5;
-    }
-    .ai-message :deep(p) {
-      margin-bottom: 0.4rem;
-    }
-    .ai-message :deep(br) {
-      display: block;
-      margin: 0.15rem 0;
-    }
-  `]
+  styles: [
+    `
+      .ai-message :deep(strong) {
+        color: #00ff88;
+        font-weight: 600;
+      }
+      .ai-message :deep(ol) {
+        list-style: decimal;
+        padding-left: 1.25rem;
+        margin: 0.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .ai-message :deep(ul) {
+        list-style: disc;
+        padding-left: 1.25rem;
+        margin: 0.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .ai-message :deep(li) {
+        line-height: 1.5;
+      }
+      .ai-message :deep(p) {
+        margin-bottom: 0.4rem;
+      }
+      .ai-message :deep(br) {
+        display: block;
+        margin: 0.15rem 0;
+      }
+    `,
+  ],
 })
 export class AiComponent implements OnInit {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
@@ -127,36 +199,31 @@ export class AiComponent implements OnInit {
   newMessage = '';
   sending = false;
 
-  constructor(private api: ApiService, private sanitizer: DomSanitizer) {}
+  constructor(
+    private api: ApiService,
+    private sanitizer: DomSanitizer,
+  ) {}
 
   ngOnInit() {
-    this.api.getChatHistory().subscribe(msgs => this.messages = msgs);
-    this.api.getQuickQuestions().subscribe(q => this.quickQuestions = q);
+    this.api.getChatHistory().subscribe((msgs) => (this.messages = msgs));
+    this.api.getQuickQuestions().subscribe((q) => (this.quickQuestions = q));
   }
 
   formatMessage(content: string): SafeHtml {
     let html = content
 
-      // Bold: **text** → <strong>text</strong>
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
 
-      // Numbered list: lines starting with "1. " "2. " etc
       .replace(/^(\d+)\.\s+(.+)$/gm, '<li>$2</li>')
 
-      // Bullet list: lines starting with "- "
       .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
 
-      // Wrap consecutive <li> items in <ol> or <ul>
-      // Simple approach: wrap all <li> blocks in <ul>
       .replace(/(<li>.*<\/li>(\n|$))+/gs, (match) => `<ul>${match}</ul>`)
 
-      // Line breaks: double newline → paragraph break
       .replace(/\n\n/g, '</p><p>')
 
-      // Single newline → <br>
       .replace(/\n/g, '<br>');
 
-    // Wrap in a paragraph if not already structured
     if (!html.startsWith('<')) {
       html = `<p>${html}</p>`;
     }
@@ -172,7 +239,7 @@ export class AiComponent implements OnInit {
       id: crypto.randomUUID(),
       content,
       isFromAI: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
     this.sending = true;
     this.scrollToBottom();
@@ -185,7 +252,7 @@ export class AiComponent implements OnInit {
       },
       error: () => {
         this.sending = false;
-      }
+      },
     });
   }
 

@@ -202,7 +202,7 @@ export interface AlpacaBar {
   close: number;
 }
 
-// ── Order types ────────────────────────────────────────────────────────────
+
 
 export interface PlaceOrderRequest {
   symbol: string;

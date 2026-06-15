@@ -133,8 +133,6 @@ export class ApiService {
     return this.http.get<AlpacaBar[]>(`${this.baseUrl}/alpaca/bars/${symbol}?timeframe=${timeframe}&limit=${limit}`);
   }
 
-  // ── Orders ─────────────────────────────────────────────────────────────
-
   placeOrder(order: PlaceOrderRequest) {
     return this.http.post<OrderResult>(`${this.baseUrl}/alpaca/orders`, order);
   }

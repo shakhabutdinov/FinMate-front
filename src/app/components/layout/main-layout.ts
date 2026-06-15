@@ -10,10 +10,10 @@ import { SideNavComponent } from './side-nav';
   imports: [CommonModule, TopNavbarComponent, BottomNavComponent, SideNavComponent],
   template: `
     <div class="h-full relative flex">
-      <!-- Desktop side nav -->
+
       <app-side-nav [activePage]="activePage()" />
 
-      <!-- Main column -->
+
       <div class="flex-1 min-w-0 flex flex-col h-full">
         <div class="flex-shrink-0">
           <app-top-navbar [title]="pageTitle()" />
@@ -23,7 +23,7 @@ import { SideNavComponent } from './side-nav';
             <ng-content />
           </div>
         </div>
-        <!-- Mobile bottom nav (hidden on desktop) -->
+
         <div class="lg:hidden">
           <app-bottom-nav [activePage]="activePage()" />
         </div>
